@@ -11,7 +11,6 @@ type Props = {
 };
 
 export async function generateMetadata({
-  params,
   searchParams,
 }: Props): Promise<Metadata> {
   const { id } = await searchParams;
@@ -59,10 +58,6 @@ export default async function TestResultPage({ params, searchParams }: Props) {
   }
 
   const { result, testTitle, testSlug } = data;
-  const shareUrl =
-    typeof window === "undefined"
-      ? `https://example.com/t/${testSlug}`
-      : `${window.location.origin}/t/${testSlug}`;
 
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-16">
