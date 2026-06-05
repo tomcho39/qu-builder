@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Org } from "@/lib/db/types";
+import type { Org, Test } from "@/lib/db/types";
 
 /** 현재 로그인 유저의 org를 가져오거나, 없으면 자동 생성 */
 export async function getOrCreateOrg(): Promise<Org> {
@@ -47,4 +47,28 @@ export async function getOrCreateOrg(): Promise<Org> {
   });
 
   return org as Org;
+}
+
+/** 서브도메인용: slug로 org + 공개 테스트 목록 조회 (인증 불필요) */
+export async function getOrgWithTests(
+  orgSlug: string,
+): Promise<{ org: Org; tests: Test[] } | null> {
+  const supabase = await createClient();
+
+  const { data: org } = await supabase
+    .from("orgs")
+    .select("*")
+    .eq("slug", orgSlug)
+    .single();
+
+  if (!org) return null;
+
+  const { data: tests } = await supabase
+    .from("tests")
+    .select("*")
+    .eq("org_id", org.id)
+    .eq("is_published", true)
+    .order("created_at", { ascending: false });
+
+  return { org: org as Org, tests: (tests ?? []) as Test[] };
 }

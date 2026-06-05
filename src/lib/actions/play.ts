@@ -3,16 +3,31 @@
 import { createClient } from "@/lib/supabase/server";
 import type { TestWithDetails, Result } from "@/lib/db/types";
 
-/** 공개된 테스트를 slug로 조회 (플레이어용, 인증 불필요) */
-export async function getPublishedTest(slug: string): Promise<TestWithDetails> {
+/** 공개된 테스트를 slug로 조회 (플레이어용, 인증 불필요)
+ *  orgSlug가 있으면 해당 org 소속 테스트만 반환 (서브도메인 격리) */
+export async function getPublishedTest(
+  slug: string,
+  orgSlug?: string,
+): Promise<TestWithDetails> {
   const supabase = await createClient();
 
-  const { data: test, error } = await supabase
+  let query = supabase
     .from("tests")
     .select("*")
     .eq("slug", slug)
-    .eq("is_published", true)
-    .single();
+    .eq("is_published", true);
+
+  if (orgSlug) {
+    const { data: org } = await supabase
+      .from("orgs")
+      .select("id")
+      .eq("slug", orgSlug)
+      .single();
+    if (!org) throw new Error("테스트를 찾을 수 없습니다.");
+    query = query.eq("org_id", org.id);
+  }
+
+  const { data: test, error } = await query.single();
 
   if (error || !test) throw new Error("테스트를 찾을 수 없습니다.");
 

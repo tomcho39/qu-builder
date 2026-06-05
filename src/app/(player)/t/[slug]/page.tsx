@@ -2,14 +2,17 @@ import { getPublishedTest } from "@/lib/actions/play";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const headersList = await headers();
+  const orgSlug = headersList.get("x-org-slug") ?? undefined;
   try {
-    const test = await getPublishedTest(slug);
+    const test = await getPublishedTest(slug, orgSlug);
     return {
       title: test.title,
       description: test.description ?? undefined,
@@ -26,10 +29,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TestStartPage({ params }: Props) {
   const { slug } = await params;
+  const headersList = await headers();
+  const orgSlug = headersList.get("x-org-slug") ?? undefined;
 
   let test;
   try {
-    test = await getPublishedTest(slug);
+    test = await getPublishedTest(slug, orgSlug);
   } catch {
     notFound();
   }
@@ -39,7 +44,6 @@ export default async function TestStartPage({ params }: Props) {
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-md space-y-8 text-center">
-        {/* 커버 이미지 */}
         {test.cover_image_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -48,7 +52,6 @@ export default async function TestStartPage({ params }: Props) {
             className="w-full rounded-2xl object-cover aspect-video"
           />
         )}
-
         <div className="space-y-3">
           <h1 className="text-3xl font-bold tracking-tight">{test.title}</h1>
           {test.description && (
@@ -56,11 +59,8 @@ export default async function TestStartPage({ params }: Props) {
               {test.description}
             </p>
           )}
-          <p className="text-sm text-muted-foreground">
-            총 {questionCount}문항
-          </p>
+          <p className="text-sm text-muted-foreground">총 {questionCount}문항</p>
         </div>
-
         <Button asChild size="lg" className="w-full rounded-full text-base h-12">
           <Link href={`/t/${slug}/play`}>테스트 시작하기</Link>
         </Button>
