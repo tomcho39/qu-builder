@@ -6,11 +6,11 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: Props) {
-  const { next } = await searchParams;
+  const { next, error } = await searchParams;
 
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-24">
@@ -21,6 +21,11 @@ export default async function LoginPage({ searchParams }: Props) {
             이메일로 로그인 링크를 받으세요
           </p>
         </div>
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive text-center">
+            {error === "auth" ? "인증에 실패했습니다. 링크가 만료됐거나 이미 사용된 링크입니다." : error}
+          </div>
+        )}
         <LoginForm next={next} />
       </div>
     </main>

@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/admin/tests";
 
+  console.log("[auth/callback] code:", code ? "present" : "missing", "| next:", next);
+
   if (code) {
     // 리다이렉트 응답을 먼저 만들고 쿠키를 직접 세팅해야
     // NextResponse.redirect()와 cookies() 불일치 문제가 없어집니다
@@ -30,11 +32,13 @@ export async function GET(request: NextRequest) {
     );
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+    console.log("[auth/callback] exchangeCodeForSession error:", error?.message ?? "none");
     if (!error) {
       return response;
     }
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  // 오류 시 로그인 페이지로
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  // code가 없을 때
+  return NextResponse.redirect(`${origin}/login?error=no_code`);
 }
